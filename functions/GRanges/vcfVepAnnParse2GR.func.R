@@ -111,7 +111,7 @@ vcfVepAnnParseGRsoma <- function(vcfIn, germline=NULL){
   }
 }
 
-vcfVepAnnParseGRmulti <- function(vcfIn){
+vcfVepAnnParseGRmultiMutect2 <- function(vcfIn){
 
   ##for multiple samples within a single VCF
   ##returns single mcol named per sample
@@ -159,7 +159,10 @@ vcfVepAnnParseGRmulti <- function(vcfIn){
   colnames(indAnnDf) <- annNames
 
   ##combine all
-  grCombined <- do.call(c, grList)
+  grCombined <- grList[[1]]
+  for(xx in 2:length(grList)){
+    grCombined <- join_overlap_intersect(grCombined, grList[[xx]])
+  }
   values(grCombined) <- c(mcols(grCombined), indAnnDf)
   return(grCombined)
 }
