@@ -116,7 +116,7 @@ vcfVepAnnParseGRmultiMutect2 <- function(vcfIn){
   ##for multiple samples within a single VCF
   ##returns single mcol named per sample
   ##contains common REF, ALT, FILTER and sample GT:AD:AF:DP
-  vcf <- readVcf(vcfIn)
+  vcf <- suppressWarnings(readVcf(vcfIn))
 
   ##parse info
   infor <- info(header(vcf))
@@ -157,6 +157,8 @@ vcfVepAnnParseGRmultiMutect2 <- function(vcfIn){
       }
     })))
   colnames(indAnnDf) <- annNames
+  indAnnDf <- as.data.frame(indAnnDf)
+  indAnnDf$HGVSp1 <- subHGVSp(indAnnDf$HGVSp)
 
   ##combine all
   grCombined <- grList[[1]]
@@ -165,4 +167,90 @@ vcfVepAnnParseGRmultiMutect2 <- function(vcfIn){
   }
   values(grCombined) <- c(mcols(grCombined), indAnnDf)
   return(grCombined)
+}
+
+##from: https://raw.githubusercontent.com/cnobles/gintools/master/R/unique_granges.R, pull requested but nitl granted use this
+unique_granges <- function(sites, sum.counts = FALSE, counts.col = NULL, rmDupCols = NULL){
+  # Checks and balance
+  if(!class(sites) == "GRanges"){
+    stop("Sites object is not a GRanges class.")}
+  if(sum.counts & is.null(counts.col)){
+    stop("Please specify the names of the column with count information.")}
+  if(!is.null(counts.col)){
+    if(!counts.col %in% names(GenomicRanges::mcols(sites))){
+      stop("Could not find counts column name in sites object.")}}
+
+  # Convert sites to a data.frame and remove duplicates
+  if(!length(names(sites)) == length(unique(names(sites)))){
+    message("Dropping rownames for data.frame conversion.")
+    df <- GenomicRanges::as.data.frame(sites, row.names = NULL)
+  }else{
+    df <- GenomicRanges::as.data.frame(sites)
+  }
+  cols <- names(df)
+
+  if(sum.counts){
+    counts_pos <- match(counts.col, cols)}
+
+  # Sum counts if needed
+  if(!sum.counts){
+    df <- dplyr::distinct(df)
+  }else{
+    df$counts <- df[,cols[counts_pos]]
+    groups <- lapply(cols[-counts_pos], as.symbol)
+    df <- dplyr::group_by_(df, .dots = groups) %>%
+      dplyr::summarise(counts = sum(counts)) %>%
+      dplyr::ungroup()
+    names(df) <- c(cols[-counts_pos], cols[counts_pos])
+  }
+
+  if(!is.null(rmDupCols)){
+    dupCols <- paste0(colnames(df),".1")
+    dupCols <- dupCols[dupCols %in% colnames(df)]
+    df <- dplyr::distinct(df) %>%
+          dplyr::select(-!!dupCols)
+  }
+  # Rebuild GRanges object
+  gr <- GenomicRanges::GRanges(
+    seqnames = df$seqnames,
+    ranges = IRanges::IRanges(start = df$start, end = df$end),
+    strand = df$strand,
+    seqinfo = GenomicRanges::seqinfo(sites)
+  )
+
+  GenomicRanges::mcols(gr) <- dplyr::select(df, 6:length(df)) %>% unique()
+  gr
+}
+
+##create single-letter HGVS protein annotation (VEP outputs 3-letter)
+##take vector, gsub out aa3 for aa1
+subHGVSp <- function(inVec){
+  lib <- c("bio3d")
+  loadedLib <- lapply(lib,function(l){suppressMessages(library(l, character.only = TRUE))})
+
+  aa1 <- bio3d::aa.table$aa1
+  ##amino acid 3 letter to gsub HGVSp
+  aa3 <- unlist(lapply(bio3d::aa.table$aa3,function(f){
+    sp <- strsplit(f,"")[[1]];
+    paste0(sp[1], tolower(sp[2]),tolower(sp[3]))
+  }))
+
+  ##include * for Ter
+  aa1 <-c(aa1,"*")
+  aa3 <- c(aa3, "Ter")
+
+  unlist(lapply(inVec,function(f){
+    #check matches (should be none or two)
+    a3 <- aa3[!is.na(unlist(stringi::stri_match_all(f,regex=aa3)))]
+    a1 <- aa1[!is.na(unlist(stringi::stri_match_all(f,regex=aa3)))]
+    ##beauty:
+    #https://stackoverflow.com/questions/19424709/r-gsub-pattern-vector-and-replacement-vector
+    if(length(a3)>0){
+      names(a1) <- a3
+      str_replace_all(f,a1)
+    }
+    else{
+      return("")
+    }
+  }))
 }
