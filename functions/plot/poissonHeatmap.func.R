@@ -3,8 +3,7 @@
 ##takes input as table of features (row) by samples (col)
 ##NB if input tibble, specify col of features with featurecol argument
 ##optional to specify fontsize
-##optional to input sleuth object, use soinput=TRUE
-##this requires gene-mode scaled_reads_per_base
+####sleuth object input requires gene-mode scaled_reads_per_base
 ##allow annotation bars using 'ann' for metadata input table
 ##NB only samples in ann are used to make plot
 ##anncols tell which columns to use from ann
