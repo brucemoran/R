@@ -13,7 +13,7 @@ libsLoaded <- lapply(libs,function(l){
   suppressWarnings(suppressMessages(library(l, character.only = T)))
 })
 
-poissonHeatmap <- function(input, featurecol=NULL, fontsize=NULL, sounit=NULL, ann=NULL, anncols=NULL) {
+poissonHeatmap <- function(input, featurecol=NULL, fontsize=NULL, sounit=NULL, ann=NULL, anncols=NULL, fileout=NULL) {
 
   ##test if sleuth object input
   if(class(input)=="sleuth"){
@@ -63,5 +63,13 @@ poissonHeatmap <- function(input, featurecol=NULL, fontsize=NULL, sounit=NULL, a
                      annCol=ann[,anncols],
                      col=colz,
                      fontsize=fontsized)
-  return(aheatqc)
+  if(!is.null(fileout)){
+    pdf(fileout, onefile=FALSE) 
+    aheatmap(samplePoisDistMatrix,
+                     annCol=ann[,anncols],
+                     col=colz,
+                     fontsize=fontsized)
+    dev.off()
+  }
+  return(list(aheatqc, samplePoisDistMatrix))
 }

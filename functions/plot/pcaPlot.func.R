@@ -58,7 +58,7 @@ pcaPlot <- function(input, intgroup, featurecol=NULL, unitsinput=NULL, ann=NULL,
   }
 
   ##input should be VST transformed now
-  inputvst <- varianceStabilizingTransformation(inputclean, blind=vstblind)
+  inputvst <- varianceStabilizingTransformation(as.matrix(round(inputclean, 0)), blind=vstblind)
 
   #calculate PCA, proportion of variance attributable
   pca_res <- prcomp(t(inputvst), scale. = F, center = F)
@@ -87,7 +87,7 @@ pcaPlot <- function(input, intgroup, featurecol=NULL, unitsinput=NULL, ann=NULL,
   if(!is.null(vstreturn)){
     return(list(pca_ploto, inputvst))
   }
-  if(!is.null(vstreturn)){
+  if(is.null(vstreturn)){
     return(pca_ploto)
   }
 }
