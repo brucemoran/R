@@ -1,52 +1,50 @@
 ##plotMA, but for ggplot
+coef.vec <- c("Int_LIR_vs_RES", "nInt_LIR_vs_RES")
+coef.ind <- c(2, 4)
 
-#plotWithHighlights(x, y, status = NULL, values = NULL, hl.pch = 16, hl.col = NULL, hl.cex = 1, legend = "topleft", bg.pch = 16, bg.col = "black", bg.cex = 0.3, pch = NULL, col = NULL, cex = NULL, ...)
-library("tidyverse")
-library("ggplot2")
-library("ggrepel")
+coefv
+coefi
 
-ggplotMA <- function(fit, coef = 1, anno=NULL, annocol=NULL, pval=0.1, title=NULL, topn=5, ...){
+plot.tbl <- tibble(ensembl_gene_id = rownames(all.fite$coefficients),
+                   Amean = all.fite$Amean,
+                   Coefs = all.fite$coefficients[,coefi],
+                   Lods = all.fite$lods[,coefi],
+                   Pval = all.fite$p.value[,coefi]) %>%
+            dplyr:::mutate(mlog10Pval = -log10(Pval)) %>%
+            left_join(rhtx2gene, .) %>%
+            na.omit()
 
-  ##standard execution of plotMA
-  if (!is(fit, "MArrayLM")) stop("fit must be an MArrayLM")
+##status for MA plot
+status_topn <- DEList[[coefi]] %>%
+               left_join(plot.tbl, .) %>%
+               na.omit() %>%
+               top_n(n=5) %>%
+               dplyr::select(external_gene_name) %>% unlist()
+status_botn <- DEList[[coefi]] %>%
+               left_join(plot.tbl, .) %>%
+               na.omit() %>%
+               top_n(n=-5) %>%
+               dplyr::select(external_gene_name) %>% unlist()
+status_n <- c(status_topn, status_botn)
+plot.tbl <- plot.tbl %>% dplyr::mutate(status = ifelse(external_gene_name %in% status_n, 1, 0)) %>%
+            dplyr::select(-human_ensembl_gene_id) %>% unique()
+plot.tbl$status <- factor(plot.tbl$status)
+plot.tbl.s <- plot.tbl %>% left_join(., DEList[[coefi]]) %>% na.omit()
+plot.tbl.ss <- plot.tbl.s %>% dplyr::filter(status %in% 1)
 
-  xlab <- "Average Mean Expression"
-  ylab <- "Log Fold Change"
+#     plotWithHighlights(x=plot.tbl$Amean, y=plot.tbl$Coefs, main=coef.vec[1], status=plot.tbl$status, values="1")
+#     text(x=plot.tbl$Amean[plot.tbl$status == 1],
+#          y=plot.tbl$Coefs[plot.tbl$status == 1],
+#          plot.tbl$external_gene_name[plot.tbl$status == 1],
+#          col="red", pos=1)
+mapl <- ggplot(plot.tbl, aes(x=Amean, y=Coefs, label=external_gene_name)) +
+geom_point(size=0.5) +
+geom_point(data=plot.tbl.ss, colour="red", size=0.5) +
+geom_text_repel(data=plot.tbl.ss, colour="red", segment.size=0.2, segment.colour="red", fontface = "bold", cex=3) +
+labs(x="Average Mean Expression", y="Log Fold Change", title=paste0("MA plot: ", coefv))
+ggsave(mapl, filename=paste0(OUTDIR, "/MA.", coefv, ".pdf"))
 
-  ##table from which to plot; include P and adjusted
-  plot.tbl <- tibble(ensembl_gene_id = rownames(fit$coef),
-                     Amean = fit$Amean,
-                     Coefs = fit$coef[,coef],
-                     Lods = fit$lods[,coef],
-                     Pval = fit$p.value[,coef]) %>%
-              dplyr::mutate(mlog10Pval = -log10(Pval)) %>%
-              dplyr::mutate(Adj.Pval = p.adjust(Pval, method="BH")) %>%
-              na.omit()
 
-  ##annotate with anno table if supplied
-  if(! is.null(anno)){
-    if("ensembl_gene_id" %in% colnames(anno)){
-      plot.tbl <- left_join(plot.tbl, anno) %>% na.omit()
-    }
-  }
 
-  ##which labels to use for annotation
-  if(is.null(annocol)){
-    annocol <- "ensembl_gene_id"
-  }
-  plot.tbl <- cbind(plot.tbl, annocol=plot.tbl[,grep(annocol, colnames(plot.tbl), value=F)])
-  colnames(plot.tbl)[dim(plot.tbl)[2]] <- "annocol"
-  plot.tbl <- plot.tbl %>% dplyr::mutate(Pval.Rank = rank(Pval))
-  mapl <- ggplot(plot.tbl, aes(x=Amean, y=Coefs, label=external_gene_name)) +
-          geom_point(size=0.5) +
-          geom_point(data=subset(plot.tbl, Adj.Pval < pval), colour="red", size=0.5) +
-          geom_text_repel(data=subset(plot.tbl, Adj.Pval < pval & Pval.Rank < 11), colour="red", segment.alpha=0.5, segment.size=0.2, segment.colour="red", fontface = "bold", cex=3) +
-          labs(x=xlab, y=ylab, title=paste0("MA plot", subtitle=title))
 
-  mapln <- ggplot(plot.tbl, aes(x=Amean, y=Coefs, label=external_gene_name)) +
-          geom_point(size=0.5) +
-          geom_point(data=subset(plot.tbl, Adj.Pval < pval), colour="red", size=0.5) +
-          labs(x=xlab, y=ylab, title=paste0("MA plot", subtitle=title))
-
-  return(list(plot.tbl, mapl, mapln))
 }

@@ -4,7 +4,7 @@ library("tidyverse")
 library("ggplot2")
 library("ggrepel")
 
-volcanoggplot <- function(fit, coef = 1, style = "p-value", highlight = 0, names = NULL, h1.col="blue", xlab = "Log2 Fold Change", ylab = NULL, pch=16, cex=0.35, anno=NULL, annocol=NULL, pval=0.1, title=NULL, topn=5, ...){
+volcanoggplot <- function(fit, coef = 1, style = "p-value", highlight = 0, names = NULL, h1.col="blue", xlab = "Log2 Fold Change", ylab = NULL, pch=16, cex=0.35, anno=NULL, annocol=NULL, pval=0.1, title=NULL, topn=50, ...){
 
   ##standard execution of plotMA
   if (!is(fit, "MArrayLM")) stop("fit must be an MArrayLM")
@@ -54,11 +54,11 @@ volcanoggplot <- function(fit, coef = 1, style = "p-value", highlight = 0, names
   vcpl <- ggplot(plot.tbl, aes(x=Coefs, y=y, label=annocol)) +
           geom_point(size=0.5) +
           geom_point(data=subset(plot.tbl, Adj.Pval < pval), colour="red", size=0.5) +
-          geom_text_repel(data=subset(plot.tbl, Adj.Pval < pval & Pval.Rank < 11), segment.alpha=0.5, segment.size=0.2, segment.colour="red", colour="red", cex=2, force=2) +
-          labs(x=xlab, y=ylab, title=("Volcano Plot"), subtitle=title)
+          geom_text_repel(data=subset(plot.tbl, Adj.Pval < pval & Pval.Rank <= topn), segment.alpha=0.5, segment.size=0.2, segment.colour="red", colour="red", cex=2, force=2) +
+          labs(x=xlab, y=ylab, title="Volcano Plot", subtitle=title)
   vcpln <- ggplot(plot.tbl, aes(x=Coefs, y=y, label=annocol)) +
           geom_point(size=0.5) +
           geom_point(data=subset(plot.tbl, Adj.Pval < pval), colour="red", size=0.5) +
-          labs(x=xlab, y=ylab, title=("Volcano Plot"), subtitle=title)
+          labs(x=xlab, y=ylab, title="Volcano Plot", subtitle=title)
   return(list(plot.tbl, vcpl, vcpln))
 }
