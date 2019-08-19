@@ -101,8 +101,12 @@ plot_expression_so_tpm <- function(so, genes, mapgenes, conds, condcol, factors,
         print("No input found, check genes are in rownames of input")
     }
     else{
-        Factor <- rep(factors[1],dim(conds)[1])
-        Factor[c(conds[condcol] == factors[2])]<-factors[2]
+        ##remove factors not specified
+        condsfilt <- conds %>%
+                     dplyr::filter(sample %in% colnames(log2tpm_genes)) %>%
+                     dplyr::filter(get(condcol) %in% factors)
+        Factor <- unlist(condsfilt[condcol])
+        log2tpm_genes <- log2tpm_genes[,colnames(log2tpm_genes) %in% condsfilt$sample]
 
         mltgg <- data.frame(0,0,0)
         mltgg <- mltgg[-1,]
@@ -123,7 +127,7 @@ plot_expression_so_tpm <- function(so, genes, mapgenes, conds, condcol, factors,
                geom_boxplot(aes(colour = Factor)) +
                geom_jitter(aes(colour = Factor), position=position_dodge(0.8)) +
                labs(y = "log2TPM", title = tag, subtitle="Expression per Group per Gene") +
-               scale_colour_manual(values = c("blue", "red")) +
+               scale_colour_manual(values = rainbow(length(factors))) +
                theme(axis.text.x = element_text(angle = 45, hjust = 1))
     }
     return(ggp)
