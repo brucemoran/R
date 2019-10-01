@@ -10,13 +10,14 @@ library("sleuth")
 ##function returns a wide format object with highest expression name+id
 ##also returns full mapping info and mean expression value per name, id pairs
 
-highest_exp_wide <- function(wide_object, anno_cols, value_col){
+highest_exp_wide <- function(wide_object, name_col, id_col, value_col){
 
   ##create mean mapping of all, tally to count occurence
-  mean_map <- wide_object %>% dplyr::select(anno_cols, value_col) %>%
-              group_by_at(anno_cols) %>%
+  mean_map <- wide_object %>%
+              dplyr::select(name_col, id_col, value_col) %>%
+              group_by_at(c(name_col, id_col)) %>%
               summarise_if(is.numeric, .funs = c(mean_value = mean)) %>%
-              na.omit() %>%
+              na.omit(mean_value) %>%
               add_tally()
 
   ##all multi-annotations
@@ -33,8 +34,14 @@ highest_exp_wide <- function(wide_object, anno_cols, value_col){
   mean_map_o <- as_tibble(do.call(cbind, lapply(mean_map_o, function(f){ f[1] }))) %>% dplyr::mutate_at(3, as.numeric)
 
   ##format
-  mean_map_1 <- mean_map %>% ungroup() %>% dplyr::select(-n)
-  mean_map_2 <- mean_map_n %>% ungroup() %>% dplyr::select(-n)
+  mean_map_1 <- mean_map %>% ungroup() %>%
+                dplyr::filter(n == 1) %>%
+                dplyr::select(-n)
 
-  bind_rows(mean_map_1, mean_map_2, mean_map_o)
+  mean_map_2 <- mean_map_n %>% ungroup() %>%
+                dplyr::filter(n == 1) %>%
+                dplyr::select(-n)
+
+  bind_rows(mean_map_1, mean_map_2, mean_map_o) %>%
+  dplyr::rename(!!value_col := mean_value)
 }
