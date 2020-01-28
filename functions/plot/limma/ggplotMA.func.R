@@ -43,8 +43,3 @@ geom_point(data=plot.tbl.ss, colour="red", size=0.5) +
 geom_text_repel(data=plot.tbl.ss, colour="red", segment.size=0.2, segment.colour="red", fontface = "bold", cex=3) +
 labs(x="Average Mean Expression", y="Log Fold Change", title=paste0("MA plot: ", coefv))
 ggsave(mapl, filename=paste0(OUTDIR, "/MA.", coefv, ".pdf"))
-
-
-
-
-}
