@@ -11,6 +11,34 @@ strSplitVec <- function(inVec,sepn){
   sapply(seq_along(inVec),function(f){strsplit(inVec[f],sepn)[[1]]})
 }
 
+vcfParseGR <- function(vcfIn, germline){
+
+  vcf <- readVcf(vcfIn)
+  gr <- suppressWarnings(InputVcf(vcfIn))
+
+  ##parse info
+  infor <- info(header(vcf))
+
+  ##somatic
+  if(!is.null(germline)){
+    somName <- names(gr)[names(gr)!=germline]
+  }
+  if(is.null(germline)){
+    somName <- names(gr)
+  }
+  print(paste0("Working on: ",somName))
+  som <- gr[[somName]]
+  ##ensure an AF is there, pisces has VF instead (thanks pisces dev=D)
+  if(! "AF" %in% names(mcols(som))) {
+    AD <- as.numeric(unlist(mcols(som)["AD"]))
+    AD1 <- as.numeric(unlist(mcols(som)["AD.1"]))
+    tot <- AD+AD1
+    mcols(som)$AF <- AD1/tot
+  }
+  seqinfo(som) <- seqinfo(vcf)[seqlevels(som)]
+  return(som)
+}
+
 vcfVepAnnParseGR <- function(vcfIn){
 
   ##for single sample within a single VCF
@@ -26,21 +54,29 @@ vcfVepAnnParseGR <- function(vcfIn){
     annNames <- unlist(strSplitFun(infor[rownames(infor)=="ANN",]$Description,"\\|"))
 
     ##somatic
-    ind <- gr[names(gr)]
+    ind <- gr[names(gr)][[1]]
     seqinfo(ind) <- seqinfo(vcf)[seqlevels(ind)]
 
     ##annotation by CANONICAL, and add to mcols
-    indAnnDf <- t(as.data.frame(lapply(strSplitFun(ind$ANN,"\\|"),function(ff){
-      if(ff[annNames=="CANONICAL"]=="YES"){
-        if(is.null(ff)){ff<-rep("",length(annNames))}
-        if(length(ff)!=length(annNames)){
-          lengExtra <- length(annNames)-length(ff)
-          ff<-c(ff,rep("",lengExtra))}
-        return(ff)}
-        else{
-          return(rep("",length(annNames)))
+    indAnnDf <- t(as.data.frame(lapply(ind$ANN,function(ff){
+      ffu <- unique(unlist(ff))
+      ffuret <- unlist(lapply(strSplitFun(ffu,"\\|"), function(fff){
+        if(fff[annNames=="CANONICAL"]=="YES"){
+          #print(ffu)
+          if(length(fff)!=length(annNames)){
+            lengExtra <- length(annNames)-length(fff)
+            fff <-c(fff, rep("", lengExtra))
+          }
+          return(fff)
         }
-      })))
+      }))
+      if(length(ffuret)>0){
+        return(ffuret[1:43])
+      }
+      else{
+        return(rep("", length(annNames)))
+      }
+    })))
     colnames(indAnnDf) <- annNames
 
     if(sum(dim(indAnnDf)) != 0){
@@ -76,6 +112,7 @@ vcfVepAnnParseGRsoma <- function(vcfIn, germline=NULL){
 
     ##VEP annotation naming
     annNames <- unlist(strSplitFun(infor[rownames(infor)=="ANN",]$Description,"\\|"))
+    annNames[1] <- gsub(" ","", rev(strsplit(annNames[1],":")[[1]])[1])
 
     ##somatic
     somName <- names(gr)[names(gr)!=germline]
@@ -84,25 +121,32 @@ vcfVepAnnParseGRsoma <- function(vcfIn, germline=NULL){
     seqinfo(som) <- seqinfo(vcf)[seqlevels(som)]
 
     ##annotation by CANONICAL, and add to mcols
-    somAnnDf <- t(as.data.frame(lapply(strSplitFun(som$ANN,"\\|"),function(ff){
-      if(ff[annNames=="CANONICAL"]=="YES"){
-        if(is.null(ff)){ff<-rep("",length(annNames))}
-        if(length(ff)!=length(annNames)){
-          lengExtra <- length(annNames)-length(ff)
-          ff<-c(ff,rep("",lengExtra))}
-        return(ff)}
-        else{
-          return(rep("",length(annNames)))
+    somAnnDf <- t(as.data.frame(lapply(som$ANN,function(ff){
+      ffu <- unique(unlist(ff))
+      ffuret <- unlist(lapply(strSplitFun(ffu,"\\|"), function(fff){
+        if(fff[annNames=="CANONICAL"]=="YES"){
+          #print(ffu)
+          if(length(fff)!=length(annNames)){
+            lengExtra <- length(annNames)-length(fff)
+            fff <-c(fff, rep("", lengExtra))
+          }
+          return(fff)
         }
-      })))
+      }))
+      if(length(ffuret)>0){
+        return(ffuret[1:43])
+      }
+      else{
+        return(rep("", length(annNames)))
+      }
+    })))
     colnames(somAnnDf) <- annNames
 
     if(sum(dim(somAnnDf)) != 0){
       values(som) <- cbind(as.data.frame(mcols(som)),somAnnDf)
       som$ANN <- NULL
     }
-    som <-unique(som)
-
+    som <- unique(som)
     return(som)
   }
   else{
