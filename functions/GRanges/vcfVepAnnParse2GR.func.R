@@ -14,29 +14,35 @@ strSplitVec <- function(inVec,sepn){
 vcfParseGR <- function(vcfIn, germline){
 
   vcf <- readVcf(vcfIn)
-  gr <- suppressWarnings(InputVcf(vcfIn))
+  if(dim(vcf)[1] != 0){
+    gr <- suppressWarnings(InputVcf(vcfIn))
 
-  ##parse info
-  infor <- info(header(vcf))
+    ##parse info
+    infor <- info(header(vcf))
 
-  ##somatic
-  if(!is.null(germline)){
-    somName <- names(gr)[names(gr)!=germline]
+    ##somatic
+    if(!is.null(germline)){
+      somName <- names(gr)[names(gr)!=germline]
+    }
+    if(is.null(germline)){
+      somName <- names(gr)
+    }
+    print(paste0("Working on: ",somName))
+    som <- gr[[somName]]
+    ##ensure an AF is there, pisces has VF instead (thanks pisces dev=D)
+    if(! "AF" %in% names(mcols(som))) {
+      AD <- as.numeric(unlist(mcols(som)["AD"]))
+      AD1 <- as.numeric(unlist(mcols(som)["AD.1"]))
+      tot <- AD+AD1
+      mcols(som)$AF <- AD1/tot
+    }
+    seqinfo(som) <- seqinfo(vcf)[seqlevels(som)]
+    return(som)
   }
-  if(is.null(germline)){
-    somName <- names(gr)
+  else{
+    print("No variants found")
+    return(GRanges())
   }
-  print(paste0("Working on: ",somName))
-  som <- gr[[somName]]
-  ##ensure an AF is there, pisces has VF instead (thanks pisces dev=D)
-  if(! "AF" %in% names(mcols(som))) {
-    AD <- as.numeric(unlist(mcols(som)["AD"]))
-    AD1 <- as.numeric(unlist(mcols(som)["AD.1"]))
-    tot <- AD+AD1
-    mcols(som)$AF <- AD1/tot
-  }
-  seqinfo(som) <- seqinfo(vcf)[seqlevels(som)]
-  return(som)
 }
 
 vcfVepAnnParseGR <- function(vcfIn){
@@ -69,9 +75,9 @@ vcfVepAnnParseGR <- function(vcfIn){
           }
           return(fff)
         }
-      }))
+      }))[1:length(annNames)]
       if(length(ffuret)>0){
-        return(ffuret[1:43])
+        return(ffuret[1:length(annNames)])
       }
       else{
         return(rep("", length(annNames)))
@@ -123,18 +129,18 @@ vcfVepAnnParseGRsoma <- function(vcfIn, germline=NULL){
     ##annotation by CANONICAL, and add to mcols
     somAnnDf <- t(as.data.frame(lapply(som$ANN,function(ff){
       ffu <- unique(unlist(ff))
+      lengffus <- length(strSplitFun(ffu[[1]],"\\|")[[1]])
       ffuret <- unlist(lapply(strSplitFun(ffu,"\\|"), function(fff){
         if(fff[annNames=="CANONICAL"]=="YES"){
-          #print(ffu)
           if(length(fff)!=length(annNames)){
             lengExtra <- length(annNames)-length(fff)
             fff <-c(fff, rep("", lengExtra))
           }
           return(fff)
         }
-      }))
+      }))[1:length(annNames)]
       if(length(ffuret)>0){
-        return(ffuret[1:43])
+        return(ffuret[1:length(annNames)])
       }
       else{
         return(rep("", length(annNames)))

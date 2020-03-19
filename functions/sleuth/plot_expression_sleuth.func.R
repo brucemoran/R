@@ -26,12 +26,12 @@ plot_expression_so_srpb <- function(so, genes, mapgenes, conds, condcol, factors
     if(class(so)!="sleuth"){
       log2_obs_norm_df <- so
     }
-    log2srpb_genes <- log2_obs_norm_df
+    log2srpb_genes <- log2_obs_norm_df[,colnames(log2_obs_norm_df) %in% rownames(conds)]
 
     #ensure genes required are in data, print out missing
     if(length(rownames(log2srpb_genes)) != length(genes)){
       print(paste0("Missing genes: ", genes[! genes %in% rownames(log2srpb_genes)]))
-      genes <- genes[genes %in% rownames(log2tpm_genes)]
+      genes <- genes[genes %in% rownames(log2srpb_genes)]
     }
     print(paste0("Working on: ", paste(rownames(log2srpb_genes), collapse=", ")))
 
