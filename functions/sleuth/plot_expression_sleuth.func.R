@@ -13,6 +13,9 @@ plot_expression_so_srpb <- function(so, genes, mapgenes, conds, condcol, factors
       genemap <- c("ensembl_gene_id", "external_gene_name")
     }
 
+    ##flatten genes
+    genes <- unlist(c(genes))
+
     if(class(so)=="sleuth"){
       log2_obs_norm_df <- dcast(so$obs_norm,
                                        target_id ~ sample,
@@ -75,6 +78,9 @@ plot_expression_so_tpm <- function(so, genes, mapgenes, conds, condcol, factors,
       genemap <- c("ensembl_gene_id", "external_gene_name")
     }
 
+    ##flatten genes
+    genes <- unlist(c(genes))
+
     if(class(so)=="sleuth"){
       log2_obs_norm_df <- dcast(so$obs_norm,
                                        target_id ~ sample,
@@ -129,6 +135,6 @@ plot_expression_so_tpm <- function(so, genes, mapgenes, conds, condcol, factors,
                labs(y = "log2TPM", title = tag, subtitle="Expression per Group per Gene") +
                scale_colour_manual(values = rainbow(length(factors))) +
                theme(axis.text.x = element_text(angle = 45, hjust = 1))
+        return(ggp)
     }
-    return(ggp)
 }

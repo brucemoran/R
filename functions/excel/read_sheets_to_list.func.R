@@ -2,6 +2,7 @@
 
 ##read all sheets into list of tibbles
 library(readxl)
+library(tidyverse)
 read_sheets_to_list <- function(FILENAME, COLTYPES = NULL) {
 
     ##allow coltypes input
