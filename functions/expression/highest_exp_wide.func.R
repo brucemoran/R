@@ -12,37 +12,21 @@ highest_exp_wide <- function(wide_object, name_col, id_col, value_col){
   ##function returns a wide format object with highest expression name+id
   ##also returns full mapping info and mean expression value per name, id pairs
 
-  ##create mean mapping of all, tally to count occurence of mapping
-  mean_map <- wide_object %>%
-              dplyr::select(name_col, id_col, value_col) %>%
-              group_by_at(c(name_col, id_col)) %>%
-              mutate(mean_value = rowMeans(.[3:dim(wide_object)[2]])) %>%
-              na.omit(mean_value) %>%
-              add_tally()
+  ##create mean_value of all rows, then count name_col
+  ##filter out all with name_col single mapping
+  mean_map <- wide_object %>% dplyr::select(name_col, id_col, value_col) %>%
+                              dplyr::mutate(mean_value = rowMeans(.[value_col])) %>%
+                              group_by_at(vars(name_col)) %>%
+                              na.omit(mean_value) %>%
+                              add_count()%>%
+                              dplyr::filter(n > 1) %>%
+                              dplyr::filter(mean_value == max(mean_value)) %>%
+                              ungroup() %>%
+                              distinct_at(vars(-id_col), .keep_all = TRUE) %>%
+                              dplyr::select(-n, -mean_value)
+  ##remove those with multi mapping (in mean_map) from original input
+  mean_map_o <- anti_join(wide_object, mean_map, by=name_col)
 
-  ##all multi-annotations
-  mean_map_n <- mean_map %>% dplyr::filter(n > 1) %>%
-                dplyr::filter(mean_value == max(mean_value)) %>%
-                ungroup() %>%
-                distinct_at(vars(-ensembl_gene_id), .keep_all=TRUE) %>%
-                dplyr::select(-n) %>%
-                add_tally()
-
-  ##still multi-annotations
-  mean_map_o <- mean_map_n %>% dplyr::filter(n > 1) %>%
-                dplyr::select(-n)
-
-  # mean_map_o <- as_tibble(do.call(cbind, lapply(mean_map_o, function(f){ f[1] }))) %>% dplyr::mutate_at(3, as.numeric)
-
-  ##format
-  mean_map_1 <- mean_map %>% ungroup() %>%
-                dplyr::filter(n == 1) %>%
-                dplyr::select(-n)
-
-  mean_map_2 <- mean_map_n %>% ungroup() %>%
-                dplyr::filter(n == 1) %>%
-                dplyr::select(-n)
-
-  bind_rows(mean_map_1, mean_map_2) %>%
-  dplyr::select(-mean_value)
+  ##return the two sets, bound
+  bind_rows(mean_map_o, mean_map)
 }
