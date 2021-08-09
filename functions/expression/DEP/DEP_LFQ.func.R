@@ -42,12 +42,13 @@ max_multi <- function(df, col){
 #' @param exclude_group string indicating group to exclude from analysis
 #' @param convert_group vector length 2 indicating group to convert from, to
 #' @param p_adj_val limma adjusted p-value threshold
+#' @param plot_dep flag to allow not plotting of DEP QCs
 
 #' @return list of ggplot2 objects for printing (PCA, PCs, loadings)
 #' @export
 
 ##format label, design replicate
-run_expt_group <- function(project_name = "DEP_DE", sample_map_tb, sample_ID, group, prot_data_tb, row_data, tech_reps = NULL, exclude_group = NULL, convert_group = NULL, p_adj_val = 0.1){
+run_expt_group <- function(project_name = "DEP_DE", sample_map_tb, sample_ID, group, prot_data_tb, row_data, tech_reps = NULL, exclude_group = NULL, convert_group = NULL, p_adj_val = 0.1, plot_dep = FALSE){
 
   ##two or more groups to test on, create a single test column
   if(length(group)>1){
@@ -117,26 +118,29 @@ run_expt_group <- function(project_name = "DEP_DE", sample_map_tb, sample_ID, gr
                colnames() %>%
                gsub("_significant","",.)
 
-  pdf(paste0("DEP/", groupname, "/", project_name, ".PCA_COR_HMs.", groupname, ".pdf"), onefile = TRUE)
-    print(plot_pca(dep, x = 1, y = 2, n = dim(data_results)[1], point_size = 4))
-    plot_cor(dep, significant = TRUE, lower = 0, upper = 1, pal = "Reds")
-    plot_heatmap(dep, type = "centered", kmeans = TRUE,
-                 col_limit = 4, show_row_names = FALSE,
-                 indicate = c("condition", "replicate"))
-    plot_heatmap(dep, type = "contrast", kmeans = TRUE,
-                col_limit = 10, show_row_names = FALSE)
-    print(plot_numbers(data_filt))
-    print(plot_coverage(data_filt))
-    print(plot_normalization(data_filt, data_norm))
-    print(plot_imputation(data_norm, data_imp_man))
-  dev.off()
+  if(plot_dep == TRUE){
+    pdf(paste0("DEP/", groupname, "/", project_name, ".PCA_COR_HMs.", groupname, ".pdf"), onefile = TRUE)
+      print(plot_pca(dep, x = 1, y = 2, n = dim(data_results)[1], point_size = 4))
+      plot_cor(dep, significant = TRUE, lower = 0, upper = 1, pal = "Reds")
+      plot_heatmap(dep, type = "centered", kmeans = TRUE,
+                   col_limit = 4, show_row_names = FALSE,
+                   indicate = c("condition", "replicate"))
+      plot_heatmap(dep, type = "contrast", kmeans = TRUE,
+                  col_limit = 10, show_row_names = FALSE)
+      print(plot_numbers(data_filt))
+      print(plot_coverage(data_filt))
+      print(plot_normalization(data_filt, data_norm))
+      print(plot_imputation(data_norm, data_imp_man))
+    dev.off()
 
-  pdf(paste0("DEP/", groupname, "/", project_name, ".volcanos.", groupname, ".pdf"))
-    lapply(contrasts, function(f){
-      print(f)
-      print(plot_volcano(dep, contrast = f, label_size = 2, add_names = TRUE))
-    })
-  dev.off()
+    pdf(paste0("DEP/", groupname, "/", project_name, ".volcanos.", groupname, ".pdf"))
+      lapply(contrasts, function(f){
+        print(f)
+        print(plot_volcano(dep, contrast = f, label_size = 2, add_names = TRUE))
+      })
+    dev.off()
+
+  }
 
   ##run our own 'all' contrast limma to access t statistic
   se <- data_imp_man
@@ -216,6 +220,8 @@ run_expt_group <- function(project_name = "DEP_DE", sample_map_tb, sample_ID, gr
   dev.off()
 
   save(dep, data_results, sig_results, data_se, plot_se, contrasts, limma_res, limma_res_list, file = paste0("DEP/", groupname, "/", project_name, ".", groupname, ".RData"))
+
+  return(list(dep = dep, dep_results = data_results, dep_sig_results = sig_results, data_se = data_se, plot_se = plot_se, contrasts = contrasts, limma_res = limma_res, limma_res_list = limma_res_list))
 }
 
 #' Plotting PCA function
@@ -257,6 +263,9 @@ BMplotPCAse <- function(se, intgroup = NULL, pc_limit = 10, pchz = NULL) {
 
   ##lapply to make all PC > pc_limit included
   pcv_u <- percentVar[percentVar > pc_limit/100]
+  if(length(pcv_u)==1){
+    pcv_u <- percentVar[1:2]
+  }
   ggps <- lapply(2:length(pcv_u), function(f){
 
       d <- data.frame(PC1 = pca$x[, 1], PC2 = pca$x[, f], intgroup.df, names = colnames(se))
