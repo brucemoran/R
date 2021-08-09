@@ -37,8 +37,7 @@ max_multi <- function(df, col){
 #' @param prot_data_tb protein expression tibble, format is col_1 = protein IDs, col_2 ... col_n are samples annotated in sample_map_tb
 #' @param sample_ID string of colname in sample_map_tb holding sample IDs in prot_data_tb tibble
 #' @param group vector indicating which columns to use for DE analysis; multiple entries are combined in a new column which is used as a single new variable
-#' @param name string indicating column of protein names
-#' @param id string indicating column of protein IDs
+#' @param row_data string indicating column of unique protein IDs
 #' @param tech_reps column indicating technical replicate groupings
 #' @param exclude_group string indicating group to exclude from analysis
 #' @param convert_group vector length 2 indicating group to convert from, to
@@ -48,7 +47,7 @@ max_multi <- function(df, col){
 #' @export
 
 ##format label, design replicate
-run_expt_group <- function(project_name = "DEP_DE", sample_map_tb  sample_ID, group, prot_data_tb, name, id, tech_reps = NULL, exclude_group = NULL, convert_group = NULL, p_adj_val = 0.1){
+run_expt_group <- function(project_name = "DEP_DE", sample_map_tb, sample_ID, group, prot_data_tb, row_data, tech_reps = NULL, exclude_group = NULL, convert_group = NULL, p_adj_val = 0.1){
 
   ##two or more groups to test on, create a single test column
   if(length(group)>1){
