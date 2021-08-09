@@ -109,7 +109,7 @@ run_expt_group <- function(project_name = "DEP_DE", sample_map_tb, sample_ID, gr
   data_imp_man <- DEP::impute(data_norm, fun = "man", shift = 1.8, scale = 0.3)
   data_diff_all_contrasts <- DEP::test_diff(se = data_imp_man,
                                        type = "all")
-  dep <- DEP::add_rejections(data_diff_all_contrasts, alpha = adj_p_val)
+  dep <- DEP::add_rejections(data_diff_all_contrasts, alpha = p_adj_val)
   data_results <- DEP::get_results(dep)
   sig_results <- data_results %>% filter(significant)
   contrasts <- as_tibble(rowData(dep)) %>%
@@ -196,9 +196,9 @@ run_expt_group <- function(project_name = "DEP_DE", sample_map_tb, sample_ID, gr
 
   volc_list <- lapply(unique(limma_res$comparison), function(f){
     lres <- limma_res[limma_res$comparison %in% f,]
-    maxlogfc <- max(lres[lres$adj.P.Val < adj_p_val,]$logFC)+2
-    minlogfc <- min(lres[lres$adj.P.Val < adj_p_val,]$logFC)
-    maxp <- -log10(min(lres[lres$adj.P.Val < adj_p_val,]$adj.P.Val))
+    maxlogfc <- max(lres[lres$adj.P.Val < p_adj_val,]$logFC)+2
+    minlogfc <- min(lres[lres$adj.P.Val < p_adj_val,]$logFC)
+    maxp <- -log10(min(lres[lres$adj.P.Val < p_adj_val,]$adj.P.Val))
     ggp <- EnhancedVolcano::EnhancedVolcano(lres,
                                      lab = lres$rowname,
                                      x = "logFC",
@@ -206,8 +206,8 @@ run_expt_group <- function(project_name = "DEP_DE", sample_map_tb, sample_ID, gr
                                      title = f,
                                      xlim = c(minlogfc, maxlogfc),
                                      ylim = c(0, maxp),
-                                     subtitle = paste0("Cut-off p.adj < ", adj_p_val),
-                                     pCutoff = adj_p_val)
+                                     subtitle = paste0("Cut-off p.adj < ", p_adj_val),
+                                     pCutoff = p_adj_val)
     return(ggp)
   })
 
