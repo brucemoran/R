@@ -312,7 +312,7 @@ pca_plot <- function(d, group, intgroup.df, pcv, scale_shape_man_vals, scale_col
     ggp <- ggplot2::ggplot(data = d,
                            ggplot2::aes_string(x = "PC1",
                                                y = colnames(d)[2],
-                                               group = intgroup)) +
+                                               group = group)) +
            ggplot2::scale_shape_manual(values = scale_shape_man_vals) +
            ggplot2::scale_colour_manual(values = scale_colour_man_vals) +
            ggplot2::labs(paste0("PCA plot using ", colnames(intgroup.df)), x = paste0("PC1: ", round(pcv[1] *  100), "% variance"),y = paste0(colnames(d)[2], ": ", round(pcv[2] * 100), "% variance")) +
@@ -320,9 +320,9 @@ pca_plot <- function(d, group, intgroup.df, pcv, scale_shape_man_vals, scale_col
                                     colour = "black",
                                     size = 2,
                                     fontface = "bold") +
-           ggplot2::geom_point(ggplot2::aes_string(shape = intgroup,
-                                                   colour = intgroup,
-                                                   fill = intgroup),
+           ggplot2::geom_point(ggplot2::aes_string(shape = group,
+                                                   colour = group,
+                                                   fill = group),
                                size = 3) +
            ggplot2::ggtitle(paste0("PCA plot using ", colnames(intgroup.df)),
                             subtitle = paste0(colnames(d)[1], " vs. ", colnames(d)[2]))
@@ -333,9 +333,9 @@ pca_plot <- function(d, group, intgroup.df, pcv, scale_shape_man_vals, scale_col
                         y = colnames(d)[2],
                         group = intgroup)) +
                         # ggplot2::aes(x = PC1, y = PC2, group = group, shape = group, colour = group)) +
-           ggplot2::geom_point(ggplot2::aes_string(shape = intgroup,
-                                                   colour = intgroup,
-                                                   fill = intgroup),
+           ggplot2::geom_point(ggplot2::aes_string(shape = group,
+                                                   colour = group,
+                                                   fill = group),
                                size = 3) +
            ggplot2::scale_shape_manual(values = scale_shape_man_vals) +
            ggplot2::scale_colour_manual(values = scale_colour_man_vals) +
