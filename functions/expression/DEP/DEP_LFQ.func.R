@@ -331,7 +331,7 @@ pca_plot <- function(d, group, intgroup.df, pcv, scale_shape_man_vals, scale_col
     if(nlevels(group)<=6){
     ggp <- ggplot2::ggplot(data = d, ggplot2::aes_string(x = "PC1",
                         y = colnames(d)[2],
-                        group = intgroup)) +
+                        group = group)) +
                         # ggplot2::aes(x = PC1, y = PC2, group = group, shape = group, colour = group)) +
            ggplot2::geom_point(ggplot2::aes_string(shape = group,
                                                    colour = group,
