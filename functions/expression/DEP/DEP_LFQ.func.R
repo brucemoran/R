@@ -201,7 +201,7 @@ run_expt_group <- function(project_name = "DEP_DE", sample_map_tb, sample_ID, gr
 
   save(dep, data_results, sig_results, data_se, plot_se, contrasts, limma_res, limma_res_list, file = paste0(out_dir, "/", groupname, "/", project_name, ".", groupname, ".RData"))
 
-  return(list(dep = dep, dep_results = data_results, dep_sig_results = sig_results, data_se = data_se, plot_se = plot_se, contrasts = contrasts, limma_res = limma_res, limma_res_list = limma_res_list, pca_plot = ggpcase, volc_plot = volc_list))
+  return(list(dep = dep, dep_results = data_results, dep_sig_results = sig_results, data_se = data_se, plot_se = plot_se, contrasts = contrasts, limma_res = limma_res, limma_res_list = limma_res_list, plots_list = list(ggpcase, volc_list)))
 }
 
 #' Plotting PCA function
