@@ -10,27 +10,6 @@ library("tidyverse")
 library("limma")
 library("SummarizedExperiment")
 
-##function to check if multiple annotation exist for names (need unique names!)
-test_multi <- function(df, col){
-  df %>% dplyr::group_by(!!!syms(col)) %>%
-         dplyr::summarize(frequency = n()) %>%
-         dplyr::arrange(desc(frequency)) %>% filter(frequency > 1)
-}
-
-##function to return max sum of numeric of multiples
-max_multi <- function(df, col){
-  df %>% dplyr::rowwise() %>%
-         dplyr::mutate(sumr = sum(dplyr::c_across(where(is.numeric)))) %>%
-         dplyr::ungroup() %>%
-         dplyr::group_by(!!!syms(col)) %>%
-         dplyr::mutate(sumn = n()) %>%
-         dplyr::filter(sumn > 1) %>%
-         dplyr::filter(sumr == max(sumr)) %>%
-         dplyr::filter(sumr != 0) %>%
-         dplyr::ungroup() %>%
-         dplyr::select(-sumr, -sumn)
-}
-
 #' run DEP on groups
 #' @param project_name string to label outputs
 #' @param sample_map_tb tibble with sample mapping info
@@ -43,6 +22,7 @@ max_multi <- function(df, col){
 #' @param convert_group vector length 2 indicating group to convert from, to
 #' @param p_adj_val limma adjusted p-value threshold
 #' @param plot_dep flag to allow not plotting of DEP QCs
+#' @param out_dir directory to output to (created if not extant)
 
 #' @return list of ggplot2 objects for printing (PCA, PCs, loadings)
 #' @export
@@ -73,7 +53,7 @@ run_expt_group <- function(project_name = "DEP_DE", sample_map_tb, sample_ID, gr
     }
   }
 
-  dir.create(paste0("DEP/", groupname), showWarnings = FALSE, recursive = TRUE)
+  dir.create(paste0(out_dir, "/", groupname), showWarnings = FALSE, recursive = TRUE)
 
   if(!is.null(tech_reps)){
     reps <- as.numeric(factor(unlist(sample_map_tb[tech_reps])))
@@ -133,7 +113,7 @@ run_expt_group <- function(project_name = "DEP_DE", sample_map_tb, sample_ID, gr
       print(plot_imputation(data_norm, data_imp_man))
     dev.off()
 
-    pdf(paste0("DEP/", groupname, "/", project_name, ".volcanos.", groupname, ".pdf"))
+    pdf(paste0(out_dir, "/", groupname, "/", project_name, ".volcanos.", groupname, ".pdf"))
       lapply(contrasts, function(f){
         print(f)
         print(plot_volcano(dep, contrast = f, label_size = 2, add_names = TRUE))
@@ -194,7 +174,7 @@ run_expt_group <- function(project_name = "DEP_DE", sample_map_tb, sample_ID, gr
   ##plot PCA
   plot_se <- se
   ggpcase <- BMplotPCAse(plot_se, intgroup = "condition", pc_limit = 10, pchz = c(16,17,3))
-  pdf(paste0("DEP/", groupname, "/", project_name, ".PCAse.", groupname, ".pdf"))
+  pdf(paste0(out_dir, "/", groupname, "/", project_name, ".PCAse.", groupname, ".pdf"))
   print(ggpcase)
   dev.off()
 
@@ -215,11 +195,11 @@ run_expt_group <- function(project_name = "DEP_DE", sample_map_tb, sample_ID, gr
     return(ggp)
   })
 
-  pdf(paste0("DEP/", groupname, "/", project_name, ".enh_volcanos.", groupname, ".pdf"))
+  pdf(paste0(out_dir, "/", groupname, "/", project_name, ".enh_volcanos.", groupname, ".pdf"))
   print(volc_list)
   dev.off()
 
-  save(dep, data_results, sig_results, data_se, plot_se, contrasts, limma_res, limma_res_list, file = paste0("DEP/", groupname, "/", project_name, ".", groupname, ".RData"))
+  save(dep, data_results, sig_results, data_se, plot_se, contrasts, limma_res, limma_res_list, file = paste0(out_dir, "/", groupname, "/", project_name, ".", groupname, ".RData"))
 
   return(list(dep = dep, dep_results = data_results, dep_sig_results = sig_results, data_se = data_se, plot_se = plot_se, contrasts = contrasts, limma_res = limma_res, limma_res_list = limma_res_list))
 }
