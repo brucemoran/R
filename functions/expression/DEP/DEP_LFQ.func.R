@@ -28,7 +28,7 @@ library("SummarizedExperiment")
 #' @export
 
 ##format label, design replicate
-run_expt_group <- function(project_name = "DEP_DE", sample_map_tb, sample_ID, group, prot_data_tb, row_data, tech_reps = NULL, exclude_group = NULL, convert_group = NULL, p_adj_val = 0.1, plot_dep = FALSE){
+run_expt_group <- function(project_name = "DEP_DE", sample_map_tb, sample_ID, group, prot_data_tb, row_data, tech_reps = NULL, exclude_group = NULL, convert_group = NULL, p_adj_val = 0.1, plot_dep = FALSE, out_dir = "DEP"){
 
   ##two or more groups to test on, create a single test column
   if(length(group)>1){
