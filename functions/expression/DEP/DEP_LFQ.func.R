@@ -177,6 +177,9 @@ run_expt_group <- function(project_name = "DEP_DE", sample_map_tb, sample_ID, gr
   pdf(paste0(out_dir, "/", groupname, "/", project_name, ".PCAse.", groupname, ".pdf"))
   print(ggpcase)
   dev.off()
+  png(paste0(out_dir, "/", groupname, "/", project_name, ".PCAse.", groupname, ".png"))
+  print(ggpcase)
+  dev.off()
 
   volc_list <- lapply(unique(limma_res$comparison), function(f){
     lres <- limma_res[limma_res$comparison %in% f,]
@@ -198,10 +201,14 @@ run_expt_group <- function(project_name = "DEP_DE", sample_map_tb, sample_ID, gr
   pdf(paste0(out_dir, "/", groupname, "/", project_name, ".enh_volcanos.", groupname, ".pdf"))
   print(volc_list)
   dev.off()
+  png(paste0(out_dir, "/", groupname, "/", project_name, ".enh_volcanos.", groupname, ".png"))
+  print(volc_list)
+  dev.off())
 
-  save(dep, data_results, sig_results, data_se, plot_se, contrasts, limma_res, limma_res_list, file = paste0(out_dir, "/", groupname, "/", project_name, ".", groupname, ".RData"))
+  plots_list <- list(ggpcase, volc_list)
+  save(dep, data_results, sig_results, data_se, plot_se, contrasts, limma_res, limma_res_list, plots_list, file = paste0(out_dir, "/", groupname, "/", project_name, ".", groupname, ".RData"))
 
-  return(list(dep = dep, dep_results = data_results, dep_sig_results = sig_results, data_se = data_se, plot_se = plot_se, contrasts = contrasts, limma_res = limma_res, limma_res_list = limma_res_list, plots_list = list(ggpcase, volc_list)))
+  return(list(dep = dep, dep_results = data_results, dep_sig_results = sig_results, data_se = data_se, plot_se = plot_se, contrasts = contrasts, limma_res = limma_res, limma_res_list = limma_res_list, plots_list))
 }
 
 #' Plotting PCA function
