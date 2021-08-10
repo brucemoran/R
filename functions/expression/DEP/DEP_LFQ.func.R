@@ -177,7 +177,7 @@ run_expt_group <- function(project_name = "DEP_DE", sample_map_tb, sample_ID, gr
   pdf(paste0(out_dir, "/", groupname, "/", project_name, ".PCAse.", groupname, ".pdf"))
   print(ggpcase)
   dev.off()
-  png(paste0(out_dir, "/", groupname, "/", project_name, ".PCAse.", groupname, ".png"))
+  png(paste0(out_dir, "/", groupname, "/", project_name, ".PCAse.", groupname, ".png"), res = 1200)
   print(ggpcase)
   dev.off()
 
@@ -201,7 +201,7 @@ run_expt_group <- function(project_name = "DEP_DE", sample_map_tb, sample_ID, gr
   pdf(paste0(out_dir, "/", groupname, "/", project_name, ".enh_volcanos.", groupname, ".pdf"))
   print(volc_list)
   dev.off()
-  png(paste0(out_dir, "/", groupname, "/", project_name, ".enh_volcanos.", groupname, ".png"))
+  png(paste0(out_dir, "/", groupname, "/", project_name, ".enh_volcanos.", groupname, ".png"), res = 1200)
   print(volc_list)
   dev.off()
 
