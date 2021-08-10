@@ -203,7 +203,7 @@ run_expt_group <- function(project_name = "DEP_DE", sample_map_tb, sample_ID, gr
   dev.off()
   png(paste0(out_dir, "/", groupname, "/", project_name, ".enh_volcanos.", groupname, ".png"))
   print(volc_list)
-  dev.off())
+  dev.off()
 
   plots_list <- list(ggpcase, volc_list)
   save(dep, data_results, sig_results, data_se, plot_se, contrasts, limma_res, limma_res_list, plots_list, file = paste0(out_dir, "/", groupname, "/", project_name, ".", groupname, ".RData"))
